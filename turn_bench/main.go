@@ -17,6 +17,8 @@ import (
 	"github.com/pion/turn/v2"
 )
 
+var packetSend, packerReeceived int;
+
 func main() {
 	host := flag.String("host", "", "TURN Server name.")
 	port := flag.Int("port", 3478, "Listening port.")
@@ -90,6 +92,8 @@ func main() {
 	// address assigned on the TURN server.
 	log.Printf("relayed-address=%s", relayConn.LocalAddr().String())
 
+	packetSend = 0;
+	packerReeceived = 0;
 	err = doPingTest(client, relayConn, *bitrate, *dur, *packetSize)
 	if err != nil {
 		log.Panicf("Failed to ping: %s", err)
@@ -131,8 +135,14 @@ func doPingTest(client *turn.Client, relayConn net.PacketConn, bitrate int, dur 
 			if pingerErr != nil {
 				break
 			}
-
-			// log.Printf("%d bytes from %s \n", n, from.String())
+			packerReeceived++;
+		    //log.Printf("%d bytes from %s \n", n, from.String())
+			//fmt.Printf(".")
+			//msg := string(buf[:n])
+			//if sentAt, pingerErr := time.Parse(time.RFC3339Nano, msg); pingerErr == nil {
+			//	rtt := time.Since(sentAt)
+		//		log.Printf("%d bytes from from %s time=%d ms\n", n, from.String(), int(rtt.Seconds()*1000))
+			//}
 		}
 	}()
 
@@ -172,9 +182,14 @@ func doPingTest(client *turn.Client, relayConn net.PacketConn, bitrate int, dur 
 		if err != nil {
 			return err
 		}
-
+		packetSend++;
 		time.Sleep(time.Duration(interval) * time.Millisecond)
 	}
+	fmt.Printf("\n")
+
+	time.Sleep(1000 * time.Millisecond)
+
+	log.Printf("PacketSended %d - PacketReceived %d - loss-rate %f \n",packetSend ,packerReeceived, (100.0*(float64((packetSend-packerReeceived))/float64(packetSend)) ) )
 
 	return nil
 }
